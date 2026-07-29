@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Node
+node_modules
+npm-debug.log
+dist
+build
+.vite
+
+# .NET
+bin
+obj
+*.user
+*.suo
+.vs
+.idea
+
+# Environment
+.env
+.env.*
+*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Test
+coverage
+*.test.*
+*.spec.*
+
+# Misc
+README.md
+*.md

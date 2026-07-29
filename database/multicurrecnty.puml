@@ -1,0 +1,413 @@
+@startuml
+skinparam linetype ortho
+skinparam class {
+    BorderThickness 1.5
+    ArrowColor #424242
+    FontColor #212121
+}
+
+' ===== CURRENCY & PRICING (Cyan) =====
+entity currencies #E0F7FA {
+    * currency_code : CHAR(3) <<PK>>
+    --
+    * currency_name : VARCHAR(100)
+    * symbol : VARCHAR(10)
+    * decimal_places : INT <<DF 2>>
+    * is_base_currency : BOOLEAN <<DF FALSE>>
+    * is_active : BOOLEAN <<DF TRUE>>
+}
+
+entity exchange_rates #E0F7FA {
+    * rate_id : INT <<PK>> <<AUTO>>
+    --
+    * from_currency : CHAR(3) <<FK>>
+    * to_currency : CHAR(3) <<FK>>
+    * rate : DECIMAL(18,6)
+    * rate_type : ENUM('OFFICIAL','PARALLEL','BLENDED')
+    * effective_date : DATE
+    --
+    <<UQ>> (from_currency, to_currency, rate_type, effective_date)
+}
+
+entity product_prices #E0F7FA {
+    * price_id : INT <<PK>> <<AUTO>>
+    --
+    * product_id : INT <<FK>>
+    * currency_code : CHAR(3) <<FK>>
+    * price_type : ENUM('RETAIL','WHOLESALE','BULK')
+    * price : DECIMAL(18,4)
+    * effective_from : DATE
+    * is_active : BOOLEAN <<DF TRUE>>
+    --
+    <<UQ>> (product_id, currency_code, price_type)
+}
+
+' ===== PRODUCT CATALOG (Blue) =====
+entity product_categories #E3F2FD {
+    * category_id : INT <<PK>> <<AUTO>>
+    --
+    * category_name : VARCHAR(100)
+    * parent_category_id : INT <<FK>> <<NULL>>
+    * is_active : BOOLEAN <<DF TRUE>>
+}
+
+entity units_of_measure #E3F2FD {
+    * uom_id : INT <<PK>> <<AUTO>>
+    --
+    * uom_code : VARCHAR(20) <<UQ>>
+    * uom_name : VARCHAR(100)
+}
+
+entity products #E3F2FD {
+    * product_id : INT <<PK>> <<AUTO>>
+    --
+    * sku : VARCHAR(50) <<UQ>>
+    * barcode : VARCHAR(50) <<UQ>> <<NULL>>
+    * product_name : VARCHAR(255)
+    * description : TEXT <<NULL>>
+    * category_id : INT <<FK>>
+    * uom_id : INT <<FK>>
+    * vat_category_id : INT <<FK>>
+    * track_inventory : BOOLEAN <<DF TRUE>>
+    * is_active : BOOLEAN <<DF TRUE>>
+    * created_at : TIMESTAMP
+}
+
+' ===== INVENTORY (Green) =====
+entity warehouses #E8F5E9 {
+    * warehouse_id : INT <<PK>> <<AUTO>>
+    --
+    * warehouse_code : VARCHAR(20) <<UQ>>
+    * warehouse_name : VARCHAR(100)
+    * location : VARCHAR(255) <<NULL>>
+    * is_active : BOOLEAN <<DF TRUE>>
+}
+
+entity inventory #E8F5E9 {
+    * inventory_id : INT <<PK>> <<AUTO>>
+    --
+    * product_id : INT <<FK>>
+    * warehouse_id : INT <<FK>>
+    * quantity : DECIMAL(18,3) <<DF 0>>
+    * average_cost : DECIMAL(18,4) <<DF 0>>
+    * cost_currency : CHAR(3) <<FK>>
+    * reorder_level : DECIMAL(18,3) <<DF 0>>
+    * updated_at : TIMESTAMP
+    --
+    <<UQ>> (product_id, warehouse_id)
+}
+
+entity inventory_transactions #E8F5E9 {
+    * transaction_id : INT <<PK>> <<AUTO>>
+    --
+    * transaction_type : ENUM('PURCHASE','SALE','ADJUSTMENT','RETURN','TRANSFER')
+    * reference_type : ENUM('SALE','PO','GRN','ADJUSTMENT','TRANSFER')
+    * reference_id : INT
+    * product_id : INT <<FK>>
+    * warehouse_id : INT <<FK>>
+    * quantity : DECIMAL(18,3)
+    * unit_cost : DECIMAL(18,4) <<NULL>>
+    * transaction_date : TIMESTAMP
+    * notes : TEXT <<NULL>>
+}
+
+' ===== PROCUREMENT (Amber) =====
+entity suppliers #FFF8E1 {
+    * supplier_id : INT <<PK>> <<AUTO>>
+    --
+    * supplier_name : VARCHAR(200)
+    * phone : VARCHAR(20) <<NULL>>
+    * email : VARCHAR(255) <<NULL>>
+    * address : TEXT <<NULL>>
+    * payment_terms_days : INT <<DF 30>>
+    * currency_code : CHAR(3) <<FK>>
+    * is_active : BOOLEAN <<DF TRUE>>
+}
+
+entity purchase_orders #FFF8E1 {
+    * po_id : INT <<PK>> <<AUTO>>
+    --
+    * po_number : VARCHAR(50) <<UQ>>
+    * supplier_id : INT <<FK>>
+    * warehouse_id : INT <<FK>>
+    * order_date : DATE
+    * currency_code : CHAR(3) <<FK>>
+    * exchange_rate : DECIMAL(18,6)
+    * total : DECIMAL(18,4)
+    * status : ENUM('DRAFT','SENT','PARTIAL','RECEIVED','CANCELLED')
+    * created_at : TIMESTAMP
+}
+
+entity po_items #FFF8E1 {
+    * po_item_id : INT <<PK>> <<AUTO>>
+    --
+    * po_id : INT <<FK>>
+    * product_id : INT <<FK>>
+    * quantity : DECIMAL(18,3)
+    * unit_price : DECIMAL(18,4)
+    * line_total : DECIMAL(18,4)
+}
+
+entity goods_receipts #FFF8E1 {
+    * grn_id : INT <<PK>> <<AUTO>>
+    --
+    * grn_number : VARCHAR(50) <<UQ>>
+    * po_id : INT <<FK>> <<NULL>>
+    * supplier_id : INT <<FK>>
+    * warehouse_id : INT <<FK>>
+    * receipt_date : DATE
+    * currency_code : CHAR(3) <<FK>>
+    * total : DECIMAL(18,4)
+    * status : ENUM('PENDING','POSTED','CANCELLED')
+    * created_at : TIMESTAMP
+}
+
+entity grn_items #FFF8E1 {
+    * grn_item_id : INT <<PK>> <<AUTO>>
+    --
+    * grn_id : INT <<FK>>
+    * po_item_id : INT <<FK>> <<NULL>>
+    * product_id : INT <<FK>>
+    * quantity : DECIMAL(18,3)
+    * unit_cost : DECIMAL(18,4)
+    * line_total : DECIMAL(18,4)
+}
+
+' ===== CUSTOMERS & SALES (Red) =====
+entity customers #FFEBEE {
+    * customer_id : INT <<PK>> <<AUTO>>
+    --
+    * customer_name : VARCHAR(200)
+    * phone : VARCHAR(20) <<NULL>>
+    * email : VARCHAR(255) <<NULL>>
+    * address : TEXT <<NULL>>
+    * credit_limit : DECIMAL(18,4) <<DF 0>>
+    * currency_code : CHAR(3) <<FK>>
+    * is_active : BOOLEAN <<DF TRUE>>
+}
+
+entity sales #FFEBEE {
+    * sale_id : INT <<PK>> <<AUTO>>
+    --
+    * sale_number : VARCHAR(50) <<UQ>>
+    * customer_id : INT <<FK>> <<NULL>>
+    * warehouse_id : INT <<FK>>
+    * sale_date : TIMESTAMP
+    * currency_code : CHAR(3) <<FK>>
+    * exchange_rate : DECIMAL(18,6)
+    * subtotal : DECIMAL(18,4)
+    * vat_total : DECIMAL(18,4)
+    * discount_total : DECIMAL(18,4)
+    * total : DECIMAL(18,4)
+    * payment_status : ENUM('PENDING','PAID','CANCELLED')
+    * created_at : TIMESTAMP
+}
+
+entity sale_items #FFEBEE {
+    * sale_item_id : INT <<PK>> <<AUTO>>
+    --
+    * sale_id : INT <<FK>>
+    * product_id : INT <<FK>>
+    * quantity : DECIMAL(18,3)
+    * unit_price : DECIMAL(18,4)
+    * unit_cost : DECIMAL(18,4) <<NULL>>
+    * vat_rate : DECIMAL(5,2)
+    * vat_amount : DECIMAL(18,4)
+    * line_total : DECIMAL(18,4)
+}
+
+entity payments #FFEBEE {
+    * payment_id : INT <<PK>> <<AUTO>>
+    --
+    * sale_id : INT <<FK>>
+    * payment_method : ENUM('CASH','ECOCASH','ZIPIT','BANK_TRANSFER','CARD','USD_CASH','ZiG_CASH','INNWALLET','OMARI')
+    * currency_code : CHAR(3) <<FK>>
+    * amount : DECIMAL(18,4)
+    * exchange_rate : DECIMAL(18,6)
+    * reference_number : VARCHAR(100) <<NULL>>
+    * payment_date : TIMESTAMP
+}
+
+' ===== ZIMRA TAX & INVOICING (Purple) =====
+entity vat_categories #F3E5F5 {
+    * vat_category_id : INT <<PK>> <<AUTO>>
+    --
+    * category_name : VARCHAR(100)
+    * vat_rate : DECIMAL(5,2)
+    * is_active : BOOLEAN <<DF TRUE>>
+}
+
+entity invoices #F3E5F5 {
+    * invoice_id : INT <<PK>> <<AUTO>>
+    --
+    * sale_id : INT <<FK>>
+    * invoice_number : VARCHAR(50) <<UQ>>
+    * zimra_invoice_number : VARCHAR(50) <<UQ>> <<NULL>>
+    * fiscal_device_id : VARCHAR(50) <<NULL>>
+    * fiscal_signature : VARCHAR(500) <<NULL>>
+    * customer_id : INT <<FK>>
+    * currency_code : CHAR(3) <<FK>>
+    * exchange_rate : DECIMAL(18,6)
+    * subtotal : DECIMAL(18,4)
+    * vat_total : DECIMAL(18,4)
+    * total : DECIMAL(18,4)
+    * invoice_date : TIMESTAMP
+    * status : ENUM('DRAFT','FISCALISED','CANCELLED','CREDIT_NOTE')
+    * submitted_to_zimra : BOOLEAN <<DF FALSE>>
+    * created_at : TIMESTAMP
+}
+
+entity invoice_items #F3E5F5 {
+    * invoice_item_id : INT <<PK>> <<AUTO>>
+    --
+    * invoice_id : INT <<FK>>
+    * sale_item_id : INT <<FK>>
+    * product_id : INT <<FK>>
+    * description : TEXT <<NULL>>
+    * quantity : DECIMAL(18,3)
+    * unit_price : DECIMAL(18,4)
+    * vat_rate : DECIMAL(5,2)
+    * vat_amount : DECIMAL(18,4)
+    * line_total : DECIMAL(18,4)
+}
+
+entity vat_records #F3E5F5 {
+    * vat_record_id : INT <<PK>> <<AUTO>>
+    --
+    * invoice_id : INT <<FK>>
+    * vat_category_id : INT <<FK>>
+    * taxable_amount : DECIMAL(18,4)
+    * vat_rate : DECIMAL(5,2)
+    * vat_amount : DECIMAL(18,4)
+    * tax_period : VARCHAR(7)
+    * submitted_to_zimra : BOOLEAN <<DF FALSE>>
+    * zimra_ack_code : VARCHAR(100) <<NULL>>
+}
+
+' ===== STOCK CONTROL (Deep Orange) =====
+entity stock_adjustments #FFE0B2 {
+    * adjustment_id : INT <<PK>> <<AUTO>>
+    --
+    * warehouse_id : INT <<FK>>
+    * adjustment_date : DATE
+    * reason : VARCHAR(255)
+    * total_value_impact : DECIMAL(18,4)
+    * currency_code : CHAR(3) <<FK>>
+    * created_at : TIMESTAMP
+}
+
+entity stock_transfers #FFE0B2 {
+    * transfer_id : INT <<PK>> <<AUTO>>
+    --
+    * from_warehouse_id : INT <<FK>>
+    * to_warehouse_id : INT <<FK>>
+    * transfer_date : DATE
+    * status : ENUM('PENDING','IN_TRANSIT','COMPLETED','CANCELLED')
+    * created_at : TIMESTAMP
+}
+
+' ===== RELATIONSHIPS =====
+currencies ||--o{ exchange_rates : from
+currencies ||--o{ exchange_rates : to
+currencies ||--o{ product_prices
+currencies ||--o{ inventory
+currencies ||--o{ suppliers
+currencies ||--o{ purchase_orders
+currencies ||--o{ goods_receipts
+currencies ||--o{ customers
+currencies ||--o{ sales
+currencies ||--o{ payments
+currencies ||--o{ invoices
+currencies ||--o{ stock_adjustments
+
+vat_categories ||--o{ products
+vat_categories ||--o{ vat_records
+
+product_categories ||--o{ product_categories : parent
+product_categories ||--o{ products
+
+units_of_measure ||--o{ products
+
+products ||--o{ product_prices
+products ||--o{ inventory
+products ||--o{ inventory_transactions
+products ||--o{ po_items
+products ||--o{ grn_items
+products ||--o{ sale_items
+products ||--o{ invoice_items
+
+warehouses ||--o{ inventory
+warehouses ||--o{ inventory_transactions
+warehouses ||--o{ purchase_orders
+warehouses ||--o{ goods_receipts
+warehouses ||--o{ sales
+warehouses ||--o{ stock_adjustments
+warehouses ||--o{ stock_transfers : from
+warehouses ||--o{ stock_transfers : to
+
+purchase_orders ||--o{ po_items
+purchase_orders ||--o{ goods_receipts
+
+po_items ||--o{ grn_items
+
+goods_receipts ||--o{ grn_items
+
+customers ||--o{ sales
+customers ||--o{ invoices
+
+sales ||--o{ sale_items
+sales ||--o{ payments
+sales ||--o| invoices : generates
+
+sale_items ||--o{ invoice_items
+
+invoices ||--o{ invoice_items
+invoices ||--o{ vat_records
+
+note right of exchange_rates
+  **Zimbabwe Multi-Currency Setup**
+  - Pre-seed: USD (base), ZiG
+  - OFFICIAL: RBZ / ZIMRA daily rate
+  - PARALLEL: Street/market rate
+  - BLENDED: Weighted average
+  - Keep 30 days max; archive older rates
+end note
+
+note right of payments
+  **Zimbabwe-Specific Methods**
+  - USD_CASH & ZiG_CASH (physical cash jars)
+  - ECOCASH, ZIPIT, INNWALLET, OMARI
+  - BANK_TRANSFER, CARD
+  - Always capture reference_number for mobile money
+end note
+
+note right of inventory
+  **Average Cost (No FIFO)**
+  - average_cost updated on every GRN posting:
+    new_avg = ((old_qty * old_avg) + (new_qty * new_cost)) / (old_qty + new_qty)
+  - unit_cost in sale_items = average_cost at time of sale
+  - Simple, low-tech, tax-compliant for ZIMRA
+end note
+
+note right of invoices
+  **ZIMRA Fiscalisation (Offline-First)**
+  - fiscal_device_id + fiscal_signature stored when fiscalised
+  - zimra_invoice_number assigned by ZIMRA
+  - submitted_to_zimra = FALSE until synced
+  - Works offline; batch-submit when internet returns
+end note
+
+note bottom of products
+  **Low-Tech Index Recommendations**
+  - products(sku, barcode, category_id)
+  - product_prices(product_id, currency_code, is_active)
+  - inventory(product_id, warehouse_id)
+  - inventory_transactions(product_id, warehouse_id, transaction_date)
+  - sales(sale_number, customer_id, sale_date)
+  - sale_items(sale_id, product_id)
+  - invoices(invoice_number, zimra_invoice_number, sale_id)
+  - vat_records(tax_period, submitted_to_zimra)
+  - exchange_rates(from_currency, to_currency, effective_date, rate_type)
+end note
+
+@enduml

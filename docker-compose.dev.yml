@@ -1,0 +1,71 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: smeretail-db-dev
+    environment:
+      MYSQL_DATABASE: smeretail
+      MYSQL_USER: retail
+      MYSQL_PASSWORD: retail_pass
+      MYSQL_ROOT_PASSWORD: root_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data_dev:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "retail", "-p retail_pass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.9
+    container_name: smeretail-search-dev
+    environment:
+      MEILI_MASTER_KEY: retail_search_key
+    ports:
+      - "7700:7700"
+    volumes:
+      - meili_data_dev:/meili_data
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: smeretail-api-dev
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: "Server=db;Database=smeretail;Uid=retail;Pwd=retail_pass;"
+      Meilisearch__Url: "http://meilisearch:7700"
+      Meilisearch__Key: "retail_search_key"
+    ports:
+      - "5000:8080"
+    volumes:
+      - ./backend:/app
+      - /app/bin
+      - /app/obj
+    depends_on:
+      db:
+        condition: service_healthy
+      meilisearch:
+        condition: service_started
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: smeretail-web-dev
+    environment:
+      VITE_API_BASE: "http://localhost:5000/api"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api
+
+volumes:
+  db_data_dev:
+  meili_data_dev:

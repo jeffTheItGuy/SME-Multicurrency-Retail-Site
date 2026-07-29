@@ -1,0 +1,74 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: smeretail-db-prod
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: smeretail
+      MYSQL_USER: retail
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db_data_prod:/var/lib/mysql
+    networks:
+      - smeretail-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "retail", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.9
+    container_name: smeretail-search-prod
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - meili_data_prod:/meili_data
+    networks:
+      - smeretail-network
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smeretail-api-prod
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Default: "Server=db;Database=smeretail;Uid=retail;Pwd=${DB_PASSWORD};"
+      Meilisearch__Url: "http://meilisearch:7700"
+      Meilisearch__Key: ${MEILI_MASTER_KEY}
+      Meilisearch__IndexName: "products"
+    networks:
+      - smeretail-network
+    depends_on:
+      db:
+        condition: service_healthy
+      meilisearch:
+        condition: service_started
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: smeretail-web-prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - smeretail-network
+    depends_on:
+      - api
+
+volumes:
+  db_data_prod:
+  meili_data_prod:
+
+networks:
+  smeretail-network:
+    driver: bridge
