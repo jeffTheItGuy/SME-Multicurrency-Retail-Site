@@ -24,7 +24,8 @@ public class VatCalculator : IVatCalculator
 
         if (product?.VatCategory == null) return (0, unitPrice * quantity);
 
-        return CalculateVatAsync(unitPrice, quantity, product.VatCategory.VatRate);
+        // FIX: added 'await' so the async method returns the tuple, not a Task<tuple>
+        return await CalculateVatAsync(unitPrice, quantity, product.VatCategory.VatRate);
     }
 
     public Task<(decimal VatAmount, decimal Total)> CalculateVatAsync(decimal unitPrice, decimal quantity, decimal vatRate)

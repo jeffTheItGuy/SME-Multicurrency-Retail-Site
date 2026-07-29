@@ -20,4 +20,8 @@ public class Product
     public ICollection<ProductPrice> Prices { get; set; } = new List<ProductPrice>();
     public ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
     public ICollection<SaleItem> SaleItems { get; set; } = new List<SaleItem>();
+    
+    // FIX: Added missing collections referenced by AppDbContext lines 158 and 210
+    public ICollection<GrnItem> GrnItems { get; set; } = new List<GrnItem>();
+    public ICollection<InvoiceItem> InvoiceItems { get; set; } = new List<InvoiceItem>();
 }
