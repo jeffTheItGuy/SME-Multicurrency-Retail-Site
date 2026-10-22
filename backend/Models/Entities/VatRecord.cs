@@ -9,8 +9,8 @@ public class VatRecord
     public decimal VatRate { get; set; }
     public decimal VatAmount { get; set; }
     public string TaxPeriod { get; set; } = string.Empty; // YYYY-MM
-    public bool SubmittedToZimra { get; set; } = false;
-    public string? ZimraAckCode { get; set; }
+    public bool SubmittedToAuthority { get; set; } = false;
+    public string? AuthorityAckCode { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public Invoice Invoice { get; set; } = null!;

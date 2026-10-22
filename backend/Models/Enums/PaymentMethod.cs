@@ -8,7 +8,6 @@ public enum PaymentMethod
     BankTransfer,
     Card,
     UsdCash,
-    ZigCash,
     InWallet,
     Omari
 }

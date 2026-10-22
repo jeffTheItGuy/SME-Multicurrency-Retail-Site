@@ -109,7 +109,6 @@ export default function PosPage() {
               <label>Currency</label>
               <select value={currency} onChange={e => setCurrency(e.target.value)} style={{ width: '100%' }}>
                 <option value="USD">USD</option>
-                <option value="ZiG">ZiG</option>
               </select>
             </div>
             <div>
@@ -117,7 +116,6 @@ export default function PosPage() {
               <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ width: '100%' }}>
                 <option value="Cash">Cash</option>
                 <option value="UsdCash">USD Cash</option>
-                <option value="ZigCash">ZiG Cash</option>
                 <option value="EcoCash">EcoCash</option>
                 <option value="Zipit">ZIPIT</option>
                 <option value="BankTransfer">Bank Transfer</option>

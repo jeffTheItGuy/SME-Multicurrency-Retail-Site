@@ -6,11 +6,11 @@ namespace SmeRetail.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ZimraController : ControllerBase
+public class FiscalisationController : ControllerBase
 {
     private readonly IFiscalisationService _fiscal;
 
-    public ZimraController(IFiscalisationService fiscal)
+    public FiscalisationController(IFiscalisationService fiscal)
     {
         _fiscal = fiscal;
     }
@@ -30,9 +30,9 @@ public class ZimraController : ControllerBase
     }
 
     [HttpPost("submit/{invoiceId}")]
-    public async Task<IActionResult> MarkSubmitted(int invoiceId, [FromQuery] string zimraInvoiceNumber, [FromQuery] string ackCode)
+    public async Task<IActionResult> MarkSubmitted(int invoiceId, [FromQuery] string fiscalInvoiceNumber, [FromQuery] string ackCode)
     {
-        await _fiscal.MarkAsSubmittedAsync(invoiceId, zimraInvoiceNumber, ackCode);
+        await _fiscal.MarkAsSubmittedAsync(invoiceId, fiscalInvoiceNumber, ackCode);
         return Ok(new { message = "Marked as submitted" });
     }
 }

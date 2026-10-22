@@ -1,4 +1,4 @@
-# SME Retail & Inventory (Zimbabwe)
+# SME Retail & Inventory
 
 Single-project ASP.NET Core backend with MySQL, Meilisearch, multi-currency, VAT, and average-cost inventory.
 
@@ -18,8 +18,8 @@ docker compose up --build
 - **Search**: Meilisearch
 - **Frontend**: React + Vite + TypeScript
 
-## Zimbabwe Features
-- Multi-currency: USD (base) + ZiG
+## Features
+- Multi-currency: USD (base)
 - Average-cost inventory valuation
-- ZIMRA fiscalisation queue (offline-first)
-- Mobile money methods: ECOCASH, ZIPIT, INNWALLET, OMARI
+- Fiscalisation queue (offline-first)
+- Payment methods: Cash, Bank Transfer, Card

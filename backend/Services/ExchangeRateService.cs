@@ -60,13 +60,8 @@ public class ExchangeRateService : IExchangeRateService
 
     public async Task SeedRatesAsync()
     {
-        if (!await _db.ExchangeRates.AnyAsync())
-        {
-            _db.ExchangeRates.AddRange(
-                new ExchangeRate { FromCurrencyCode = "USD", ToCurrencyCode = "ZiG", Rate = 13.5m, RateType = RateType.Official, EffectiveDate = DateTime.UtcNow.Date },
-                new ExchangeRate { FromCurrencyCode = "USD", ToCurrencyCode = "ZiG", Rate = 16.2m, RateType = RateType.Parallel, EffectiveDate = DateTime.UtcNow.Date }
-            );
-            await _db.SaveChangesAsync();
-        }
+        // Single-currency deployment (USD base). Add seed rates here if additional
+        // currencies are introduced later.
+        await Task.CompletedTask;
     }
 }

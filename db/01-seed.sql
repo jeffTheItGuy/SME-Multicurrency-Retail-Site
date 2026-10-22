@@ -2,11 +2,10 @@ CREATE DATABASE IF NOT EXISTS smeretail CHARACTER SET utf8mb4 COLLATE utf8mb4_un
 
 USE smeretail;
 
--- Seed currencies for Zimbabwe
+-- Seed currencies
 INSERT INTO currencies (currency_code, currency_name, symbol, decimal_places, is_base_currency, is_active)
 VALUES 
-  ('USD', 'US Dollar', '$', 2, TRUE, TRUE),
-  ('ZiG', 'Zimbabwe Gold', 'ZiG', 2, FALSE, TRUE)
+  ('USD', 'US Dollar', '$', 2, TRUE, TRUE)
 ON DUPLICATE KEY UPDATE currency_name = VALUES(currency_name);
 
 -- Seed VAT categories
@@ -30,6 +29,6 @@ ON DUPLICATE KEY UPDATE uom_name = VALUES(uom_name);
 -- Seed warehouses
 INSERT INTO warehouses (warehouse_code, warehouse_name, location, is_active)
 VALUES 
-  ('MAIN', 'Main Warehouse', 'Harare', TRUE),
-  ('SHOP', 'Retail Shop Floor', 'Harare', TRUE)
+  ('MAIN', 'Main Warehouse', 'Main Location', TRUE),
+  ('SHOP', 'Retail Shop Floor', 'Main Location', TRUE)
 ON DUPLICATE KEY UPDATE warehouse_name = VALUES(warehouse_name);

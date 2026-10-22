@@ -196,7 +196,7 @@ public class AppDbContext : DbContext
         {
             e.HasKey(i => i.InvoiceId);
             e.HasIndex(i => i.InvoiceNumber).IsUnique();
-            e.HasIndex(i => i.ZimraInvoiceNumber).IsUnique();
+            e.HasIndex(i => i.FiscalInvoiceNumber).IsUnique();
             e.HasOne(i => i.Sale).WithOne(s => s.Invoice).HasForeignKey<Invoice>(i => i.SaleId);
             e.HasOne(i => i.Customer).WithMany().HasForeignKey(i => i.CustomerId);
         });
@@ -214,7 +214,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<VatRecord>(e =>
         {
             e.HasKey(v => v.VatRecordId);
-            e.HasIndex(v => new { v.TaxPeriod, v.SubmittedToZimra });
+            e.HasIndex(v => new { v.TaxPeriod, v.SubmittedToAuthority });
             e.HasOne(v => v.Invoice).WithMany(i => i.VatRecords).HasForeignKey(v => v.InvoiceId);
             e.HasOne(v => v.VatCategory).WithMany(vc => vc.VatRecords).HasForeignKey(v => v.VatCategoryId);
         });
@@ -235,3 +235,4 @@ public class AppDbContext : DbContext
         });
     }
 }
+

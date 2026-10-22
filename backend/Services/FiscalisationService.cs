@@ -8,7 +8,7 @@ public interface IFiscalisationService
 {
     Task<Invoice> FiscaliseAsync(int saleId);
     Task<List<Invoice>> GetPendingSubmissionsAsync();
-    Task MarkAsSubmittedAsync(int invoiceId, string zimraInvoiceNumber, string ackCode);
+    Task MarkAsSubmittedAsync(int invoiceId, string fiscalInvoiceNumber, string ackCode);
 }
 
 public class FiscalisationService : IFiscalisationService
@@ -46,7 +46,7 @@ public class FiscalisationService : IFiscalisationService
             VatTotal = sale.VatTotal,
             Total = sale.Total,
             Status = Models.Enums.InvoiceStatus.Draft,
-            SubmittedToZimra = false
+            SubmittedToAuthority = false
         };
 
         _db.Invoices.Add(invoice);
@@ -78,7 +78,7 @@ public class FiscalisationService : IFiscalisationService
                     VatRate = si.VatRate,
                     VatAmount = si.VatAmount,
                     TaxPeriod = DateTime.UtcNow.ToString("yyyy-MM"),
-                    SubmittedToZimra = false
+                    SubmittedToAuthority = false
                 });
             }
         }
@@ -91,12 +91,12 @@ public class FiscalisationService : IFiscalisationService
     public async Task<List<Invoice>> GetPendingSubmissionsAsync()
     {
         return await _db.Invoices
-            .Where(i => !i.SubmittedToZimra && i.Status == Models.Enums.InvoiceStatus.Fiscalised)
+            .Where(i => !i.SubmittedToAuthority && i.Status == Models.Enums.InvoiceStatus.Fiscalised)
             .Include(i => i.VatRecords)
             .ToListAsync();
     }
 
-    public async Task MarkAsSubmittedAsync(int invoiceId, string zimraInvoiceNumber, string ackCode)
+    public async Task MarkAsSubmittedAsync(int invoiceId, string fiscalInvoiceNumber, string ackCode)
     {
         var invoice = await _db.Invoices
             .Include(i => i.VatRecords)
@@ -104,17 +104,17 @@ public class FiscalisationService : IFiscalisationService
 
         if (invoice == null) return;
 
-        invoice.ZimraInvoiceNumber = zimraInvoiceNumber;
-        invoice.SubmittedToZimra = true;
+        invoice.FiscalInvoiceNumber = fiscalInvoiceNumber;
+        invoice.SubmittedToAuthority = true;
         invoice.Status = Models.Enums.InvoiceStatus.Fiscalised;
 
         foreach (var vr in invoice.VatRecords)
         {
-            vr.SubmittedToZimra = true;
-            vr.ZimraAckCode = ackCode;
+            vr.SubmittedToAuthority = true;
+            vr.AuthorityAckCode = ackCode;
         }
 
         await _db.SaveChangesAsync();
-        _logger.LogInformation("Invoice {InvoiceId} marked as submitted to ZIMRA", invoiceId);
+        _logger.LogInformation("Invoice {InvoiceId} marked as submitted", invoiceId);
     }
 }
